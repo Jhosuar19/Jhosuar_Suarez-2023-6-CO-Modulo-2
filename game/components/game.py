@@ -4,6 +4,7 @@ import pygame
 #   tambien tenemos valores constantes como el title, etc
 from game.utils.constants import BG, ICON, SCREEN_HEIGHT, SCREEN_WIDTH, TITLE, FPS, DEFAULT_TYPE
 from game.components.Spaceship import Ship
+from game.components.Enemy import Enemys
 
 # Game es la definicion de la clase (plantilla o molde para sacar objetos)
 # self es una referencia que indica que el metodo o el atributo es de cada "objeto" de la clase Game
@@ -18,12 +19,19 @@ class Game:
         self.game_speed = 10
         self.x_pos_bg = 0
         self.y_pos_bg = 0
-        self.player = Ship(515,530, SCREEN_WIDTH, SCREEN_HEIGHT) #crea una instancia de la clase ship y le da la posicion deseada
+        self.player = Ship(515,530, SCREEN_WIDTH, SCREEN_HEIGHT, "xwing") # Crea una instancia de la clase ship y le da la posicion deseada
+        self.enemies = []
+
+        dv1 = Enemys("dv1", 10)
+        dv2 = Enemys("dv2", 20)
+
+        self.enemies.append(dv1)
+        self.enemies.append(dv2)
 
     # este es el "game loop"
     # # Game loop: events - update - draw
     def run(self):
-        self.playing = True
+        self.playing = True 
         while self.playing:
             self.handle_events()
             self.update()
@@ -43,6 +51,8 @@ class Game:
     def update(self):
         user_input = pygame.key.get_pressed()  # Obtener el estado actual de todas las teclas
         self.player.update(user_input)  # Actualizar la nave según la entrada del usuario
+        for enemy in self.enemies:
+            enemy.update()
 
 
     # este metodo "dibuja o renderiza o refresca mis cambios en la pantalla del juego"
@@ -54,6 +64,8 @@ class Game:
         self.screen.fill((255, 255, 255)) # esta tupla (255, 255, 255) representa un codigo de color: blanco
         self.draw_background()
         self.player.draw(self.screen)
+        for enemy in self.enemies:
+            enemy.draw(self.screen)
         pygame.display.update()
         pygame.display.flip()
 
@@ -77,3 +89,4 @@ class Game:
         # No hay una velocidad de juego como tal, el "game_speed" simplemente me indica
         # cuanto me voy a mover (cuantos pixeles hacia arriba o abajo) cen el eje Y
         self.y_pos_bg += self.game_speed
+        
