@@ -1,6 +1,7 @@
 import pygame
 from pygame.sprite import Sprite
 from game.utils.constants import SPACESHIP
+from game.components.bullet import Bullet
 
 class Ship(Sprite):
     def __init__(self, x, y, screen_width, screen_height,name):
@@ -14,6 +15,7 @@ class Ship(Sprite):
         self.screen_width = screen_width  # Ancho de la pantalla
         self.screen_height = screen_height  # Alto de la pantalla
         self.name = name # Nombre nave 
+        self.Count = 0
 
     def update(self, user_input):
         # Actualizar la posición de la nave 
@@ -23,11 +25,24 @@ class Ship(Sprite):
         self.rect.x = max(0, min(self.rect.x, self.screen_width - self.rect.width))
         self.rect.y = max(0, min(self.rect.y, self.screen_height - self.rect.height))
 
+    def increase_Count(self):
+        self.Count += 1
+
     def draw(self, screen):
         # Dibujar la nave en la pantalla en su posición actual
         screen.blit(self.image, (self.rect.x, self.rect.y))
         # Mostrar el nombre de la nave como un label
-        font = pygame.font.Font(None, 24)  # Crear un objeto de fuente con fuente predeterminada y tamaño 24
-        text = font.render(self.name, True, (255, 255, 255))  # Renderizar el texto con el nombre del enemigo en color blanco
-        text_rect = text.get_rect(center=(self.rect.x + self.rect.width // 2, self.rect.y + self.rect.height - 65))  # Obtener un rectángulo que rodea el texto y posicionarlo centrado sobre el enemigo
-        screen.blit(text, text_rect)  # Dibujar el texto en la pantalla en la posición determinada por el rectángulo del texto
+        font = pygame.font.Font(None, 24)
+        text = font.render(self.name, True, (255, 255, 255))
+        text_rect = text.get_rect(center=(self.rect.x + self.rect.width // 2, self.rect.y + self.rect.height - 80))
+        screen.blit(text, text_rect)
+        # Mostrar el contador de enemigos destruidos debajo del nombre de la nave
+        counter_text = font.render(f"Enemies Destroyed: {self.Count}", True, (255, 0, 0))
+        counter_text_rect = counter_text.get_rect(center=(self.rect.x + self.rect.width // 2, self.rect.y + self.rect.height -65))
+        screen.blit(counter_text, counter_text_rect)
+        
+    def shoot(self):
+        bullet = Bullet(self.rect.x + self.rect.width // 2, self.rect.y)
+        return bullet
+    
+     

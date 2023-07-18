@@ -4,8 +4,9 @@ import random
 # game.utils.constants -> es un modulo donde tengo "objetos" en memoria como el BG (background)...etc
 #   tambien tenemos valores constantes como el title, etc
 from game.utils.constants import BG, ICON, SCREEN_HEIGHT, SCREEN_WIDTH, TITLE, FPS, DEFAULT_TYPE, ENEMY_1, ENEMY_2
-from game.components.Spaceship import Ship
+from game.components.spaceship import Ship
 from game.components.enemy import Enemi
+from pygame.sprite import Group
 
 # Game es la definicion de la clase (plantilla o molde para sacar objetos)
 # self es una referencia que indica que el metodo o el atributo es de cada "objeto" de la clase Game
@@ -23,16 +24,9 @@ class Game:
         self.player = Ship(515,530, SCREEN_WIDTH, SCREEN_HEIGHT, "xwing") # Crea una instancia de la clase ship y le da la posicion deseada
         self.enemies = []
         self.enemy_speed = 1
-        ENEMY_IMAGES = [ENEMY_1, ENEMY_2]
-
-          # Crear enemigos aleatorios
-        num_enemies = random.randint(10, 20)  # Cantidad aleatoria de enemigos entre 2 y 5
-        for i in range(num_enemies):
-            name = f"dv{i+1}"  # Nombre aleatorio para el enemigo
-            image = random.choice(ENEMY_IMAGES)  # Imagen aleatoria para el enemigo
-            move_distance = random.randint(-1, 1 )# Movimiento aleatorio del enemigo
-            enemy = Enemi(name, image, self.enemy_speed)
-            self.enemies.append(enemy)
+        self.player_bullets = Group()
+        self.enemy_index = 1
+        self.player_index = 1
 
     # este es el "game loop"
     # # Game loop: events - update - draw
@@ -50,15 +44,50 @@ class Game:
         for event in pygame.event.get(): # con el for sacamos cada evento del "iterable"
             if event.type == pygame.QUIT: # pygame.QUIT representa la X de la ventana
                 self.playing = False
+            
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    # Si se presiona la barra espaciadora, el jugador dispara una bala
+                    bullet = self.player.shoot()
+                    self.player_bullets.add(bullet)
 
     # aca escribo ALGO de la logica "necesaria" -> repartimos responsabilidades entre clases
     # o sea aqui deberia llamar a los updates de mis otros objetos
     # si tienes un spaceship; el spaceship deberia tener un "update" method que llamamos desde aqui
     def update(self):
-        user_input = pygame.key.get_pressed()  # Obtener el estado actual de todas las teclas
-        self.player.update(user_input)  # Actualizar la nave según la entrada del usuario
+        user_input = pygame.key.get_pressed()
+        self.player.update(user_input)
+        bullets_to_remove = []
+
         for enemy in self.enemies:
             enemy.update()
+
+        for bullet in self.player_bullets:
+            bullet.update()
+
+            for enemy in self.enemies:
+                if bullet.rect.colliderect(enemy.rect):
+                    bullets_to_remove.append(bullet)
+                    self.enemies.remove(enemy)
+                    self.player.increase_Count()
+
+        for bullet in bullets_to_remove:
+            self.player_bullets.remove(bullet)
+
+        if len(self.enemies) < 10:
+            self.create_enemy_at_top()
+
+        for enemy in self.enemies:
+            enemy.update()
+
+    def create_enemy_at_top(self):
+        ENEMY_IMAGES = [ENEMY_1, ENEMY_2]
+        image = random.choice(ENEMY_IMAGES)
+        enemy = Enemi(f"dv{self.enemy_index}", image, self.enemy_speed)
+        self.enemy_index += 1
+        enemy.rect.x = random.randint(0, SCREEN_WIDTH - enemy.rect.width)
+        enemy.rect.y = -enemy.rect.height
+        self.enemies.append(enemy)
 
 
     # este metodo "dibuja o renderiza o refresca mis cambios en la pantalla del juego"
@@ -72,6 +101,9 @@ class Game:
         self.player.draw(self.screen)
         for enemy in self.enemies:
             enemy.draw(self.screen)
+        
+        for bullet in self.player_bullets:
+            bullet.draw(self.screen)
         pygame.display.update()
         pygame.display.flip()
 
@@ -95,4 +127,3 @@ class Game:
         # No hay una velocidad de juego como tal, el "game_speed" simplemente me indica
         # cuanto me voy a mover (cuantos pixeles hacia arriba o abajo) cen el eje Y
         self.y_pos_bg += self.game_speed
-        
