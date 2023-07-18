@@ -13,7 +13,7 @@ class Ship(Sprite):
         self.ship_speed = 10  # Velocidad de la nave
         self.screen_width = screen_width  # Ancho de la pantalla
         self.screen_height = screen_height  # Alto de la pantalla
-        self.name = name 
+        self.name = name # Nombre nave 
 
     def update(self, user_input):
         # Actualizar la posición de la nave 
@@ -27,7 +27,7 @@ class Ship(Sprite):
         # Dibujar la nave en la pantalla en su posición actual
         screen.blit(self.image, (self.rect.x, self.rect.y))
         # Mostrar el nombre de la nave como un label
-        font = pygame.font.Font(None, 24)
-        text = font.render(self.name, True, (255, 255, 255))
-        text_rect = text.get_rect(center=(self.rect.x + self.rect.width // 2, self.rect.y + self.rect.height - 65))
-        screen.blit(text, text_rect)
+        font = pygame.font.Font(None, 24)  # Crear un objeto de fuente con fuente predeterminada y tamaño 24
+        text = font.render(self.name, True, (255, 255, 255))  # Renderizar el texto con el nombre del enemigo en color blanco
+        text_rect = text.get_rect(center=(self.rect.x + self.rect.width // 2, self.rect.y + self.rect.height - 65))  # Obtener un rectángulo que rodea el texto y posicionarlo centrado sobre el enemigo
+        screen.blit(text, text_rect)  # Dibujar el texto en la pantalla en la posición determinada por el rectángulo del texto

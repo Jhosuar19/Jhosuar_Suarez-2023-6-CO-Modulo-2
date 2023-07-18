@@ -1,10 +1,11 @@
 import pygame
+import random
 
 # game.utils.constants -> es un modulo donde tengo "objetos" en memoria como el BG (background)...etc
 #   tambien tenemos valores constantes como el title, etc
-from game.utils.constants import BG, ICON, SCREEN_HEIGHT, SCREEN_WIDTH, TITLE, FPS, DEFAULT_TYPE
+from game.utils.constants import BG, ICON, SCREEN_HEIGHT, SCREEN_WIDTH, TITLE, FPS, DEFAULT_TYPE, ENEMY_1, ENEMY_2
 from game.components.Spaceship import Ship
-from game.components.Enemy import Enemys
+from game.components.enemy import Enemi
 
 # Game es la definicion de la clase (plantilla o molde para sacar objetos)
 # self es una referencia que indica que el metodo o el atributo es de cada "objeto" de la clase Game
@@ -21,12 +22,17 @@ class Game:
         self.y_pos_bg = 0
         self.player = Ship(515,530, SCREEN_WIDTH, SCREEN_HEIGHT, "xwing") # Crea una instancia de la clase ship y le da la posicion deseada
         self.enemies = []
+        self.enemy_speed = 1
+        ENEMY_IMAGES = [ENEMY_1, ENEMY_2]
 
-        dv1 = Enemys("dv1", 10)
-        dv2 = Enemys("dv2", 20)
-
-        self.enemies.append(dv1)
-        self.enemies.append(dv2)
+          # Crear enemigos aleatorios
+        num_enemies = random.randint(10, 20)  # Cantidad aleatoria de enemigos entre 2 y 5
+        for i in range(num_enemies):
+            name = f"dv{i+1}"  # Nombre aleatorio para el enemigo
+            image = random.choice(ENEMY_IMAGES)  # Imagen aleatoria para el enemigo
+            move_distance = random.randint(-1, 1 )# Movimiento aleatorio del enemigo
+            enemy = Enemi(name, image, self.enemy_speed)
+            self.enemies.append(enemy)
 
     # este es el "game loop"
     # # Game loop: events - update - draw
