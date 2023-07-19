@@ -1,6 +1,6 @@
 import pygame
 from pygame.sprite import Sprite
-from game.utils.constants import SPACESHIP
+from game.utils.constants import SPACESHIP, HEART
 from game.components.bullet import Bullet
 
 class Ship(Sprite):
@@ -15,7 +15,10 @@ class Ship(Sprite):
         self.screen_width = screen_width  # Ancho de la pantalla
         self.screen_height = screen_height  # Alto de la pantalla
         self.name = name # Nombre nave 
-        self.Count = 0
+        self.count = 0
+        self.player_bullets = pygame.sprite.Group()  # Usamos el sprite.Group de pygame
+        self.can_shoot = True  # Propiedad para controlar si el jugador puede disparar
+        self.lives = 10  # Número de vidas iniciales del jugador
 
     def update(self, user_input):
         # Actualizar la posición de la nave 
@@ -25,8 +28,14 @@ class Ship(Sprite):
         self.rect.x = max(0, min(self.rect.x, self.screen_width - self.rect.width))
         self.rect.y = max(0, min(self.rect.y, self.screen_height - self.rect.height))
 
-    def increase_Count(self):
-        self.Count += 1
+        if user_input[pygame.K_SPACE] and self.can_shoot:
+            self.shoot()
+            self.can_shoot = False  # Desactivamos el disparo para evitar ráfagas continuas
+        elif not user_input[pygame.K_SPACE]:
+            self.can_shoot = True  # Restauramos la capacidad de disparar cuando se suelta la tecla
+
+    def increase_count(self):
+        self.count += 1
 
     def draw(self, screen):
         # Dibujar la nave en la pantalla en su posición actual
@@ -37,12 +46,31 @@ class Ship(Sprite):
         text_rect = text.get_rect(center=(self.rect.x + self.rect.width // 2, self.rect.y + self.rect.height - 80))
         screen.blit(text, text_rect)
         # Mostrar el contador de enemigos destruidos debajo del nombre de la nave
-        counter_text = font.render(f"Enemies Destroyed: {self.Count}", True, (255, 0, 0))
+        counter_text = font.render(f"Enemies Destroyed: {self.count}", True, (255, 0, 0))
         counter_text_rect = counter_text.get_rect(center=(self.rect.x + self.rect.width // 2, self.rect.y + self.rect.height -65))
         screen.blit(counter_text, counter_text_rect)
-        
+        heart_x = 10  # Posición horizontal del primer corazón
+        heart_y = 10  # Posición vertical del primer corazón
+        for _ in range(self.lives):
+            screen.blit(HEART, (heart_x, heart_y))
+            heart_x += HEART.get_width() + 5
+
     def shoot(self):
         bullet = Bullet(self.rect.x + self.rect.width // 2, self.rect.y)
-        return bullet
+        self.player_bullets.add(bullet)  # Agregamos la bala al sprite.Group de balas del jugador
+
+    def get_bullets(self):
+        return self.player_bullets
     
-     
+
+    def lose_life(self):
+        if self.lives > 0:
+            self.lives -= 1
+
+    def reset(self):
+        self.rect.x = 515
+        self.rect.y = 530
+        self.count = 0
+        self.lives = 10
+        self.player_bullets.empty()
+        self.can_shoot = True

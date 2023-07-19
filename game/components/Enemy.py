@@ -35,3 +35,5 @@ class Enemi(Sprite):
         text = font.render(self.name, True, (255, 0, 0))
         text_rect = text.get_rect(center=(self.rect.x + self.rect.width // 2, self.rect.y + self.rect.height + 10))  # Obtener el rectángulo del texto y centrarlo debajo de la imagen del enemigo
         screen.blit(text, text_rect)  # Dibujar el texto en la pantalla
+
+    

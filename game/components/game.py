@@ -23,10 +23,10 @@ class Game:
         self.y_pos_bg = 0
         self.player = Ship(515,530, SCREEN_WIDTH, SCREEN_HEIGHT, "xwing") # Crea una instancia de la clase ship y le da la posicion deseada
         self.enemies = []
-        self.enemy_speed = 1
-        self.player_bullets = Group()
-        self.enemy_index = 1
-        self.player_index = 1
+        self.enemy_speed = 1  # Establece la velocidad de los enemigos a 1.
+        self.player_bullets = Group()  # Crea un grupo vacío para almacenar las balas del jugador.
+        self.enemy_index = 1  # Inicializa un índice para llevar la cuenta de los enemigos creados.
+        self.game_over = False  # Variable para controlar si la pantalla de "Game Over" debe mostrarse o no
 
     # este es el "game loop"
     # # Game loop: events - update - draw
@@ -35,7 +35,10 @@ class Game:
         while self.playing:
             self.handle_events()
             self.update()
+            self.check_collisions()  # Llamar al método para manejar colisiones con las balas del jugador
             self.draw()
+            if self.game_over:
+                self.wait_for_restart()
         pygame.display.quit()
         pygame.quit()
 
@@ -45,49 +48,59 @@ class Game:
             if event.type == pygame.QUIT: # pygame.QUIT representa la X de la ventana
                 self.playing = False
             
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    # Si se presiona la barra espaciadora, el jugador dispara una bala
-                    bullet = self.player.shoot()
-                    self.player_bullets.add(bullet)
-
-    # aca escribo ALGO de la logica "necesaria" -> repartimos responsabilidades entre clases
+    #aca escribo ALGO de la logica "necesaria" -> repartimos responsabilidades entre clases
     # o sea aqui deberia llamar a los updates de mis otros objetos
     # si tienes un spaceship; el spaceship deberia tener un "update" method que llamamos desde aqui
     def update(self):
-        user_input = pygame.key.get_pressed()
-        self.player.update(user_input)
-        bullets_to_remove = []
+        user_input = pygame.key.get_pressed()  # Obtiene el estado del teclado.
+        self.player.update(user_input)  # Actualiza el estado del jugador según la entrada del usuario.
+        
+        if len(self.enemies) < 10:  # Si hay menos de 10 enemigos en pantalla...
+            self.create_enemy_at_top()  # ...crea un nuevo enemigo en la parte superior de la pantalla.
 
+        # Actualiza cada enemigo en la lista de enemigos nuevamente, después de la posible adición de un nuevo enemigo.
         for enemy in self.enemies:
             enemy.update()
 
-        for bullet in self.player_bullets:
-            bullet.update()
+    def check_collisions(self):
+        if not self.game_over:
+            bullets_to_remove = []  # Lista para almacenar las balas que deben eliminarse.
+            player_bullets = self.player.get_bullets()
 
+    # Verificar colisiones entre la nave y los enemigos
             for enemy in self.enemies:
-                if bullet.rect.colliderect(enemy.rect):
-                    bullets_to_remove.append(bullet)
-                    self.enemies.remove(enemy)
-                    self.player.increase_Count()
+                if self.player.rect.colliderect(enemy.rect):
+                    self.player.lose_life()  # Restar una vida al jugador
+                    self.enemies.remove(enemy)  # Eliminar el enemigo que colisionó con la nave
 
-        for bullet in bullets_to_remove:
-            self.player_bullets.remove(bullet)
+                    if self.player.lives <= 0:
+                        self.game_over_screen()  # Mostrar pantalla de "Game Over" si el jugador se queda sin vidas
+                        self.game_over = True  # Finalizar el juego
 
-        if len(self.enemies) < 10:
-            self.create_enemy_at_top()
+    # Actualizar cada bala del jugador en la lista de balas del jugador.
+            for bullet in player_bullets:
+                bullet.update()
 
-        for enemy in self.enemies:
-            enemy.update()
+        # Verificar colisiones entre las balas del jugador y los enemigos.
+                for enemy in self.enemies:
+                    if bullet.rect.colliderect(enemy.rect):
+                        bullets_to_remove.append(bullet)  # Agregar la bala a la lista de balas a eliminar.
+                        self.enemies.remove(enemy)  # Eliminar el enemigo que colisionó con la bala del jugador.
+                        self.player.increase_count()  # Incrementar el contador de enemigos eliminados por el jugador.
 
+    # Eliminar las balas que colisionaron con enemigos.
+            for bullet in bullets_to_remove:
+                player_bullets.remove(bullet)
+
+    # Crea un nuevo enemigo en la parte superior de la pantalla.
     def create_enemy_at_top(self):
-        ENEMY_IMAGES = [ENEMY_1, ENEMY_2]
-        image = random.choice(ENEMY_IMAGES)
-        enemy = Enemi(f"dv{self.enemy_index}", image, self.enemy_speed)
-        self.enemy_index += 1
-        enemy.rect.x = random.randint(0, SCREEN_WIDTH - enemy.rect.width)
-        enemy.rect.y = -enemy.rect.height
-        self.enemies.append(enemy)
+        ENEMY_IMAGES = [ENEMY_1, ENEMY_2]  # Lista de imágenes de enemigos disponibles.
+        image = random.choice(ENEMY_IMAGES)  # Elige una imagen de enemigo al azar.
+        enemy = Enemi(f"dv{self.enemy_index}", image, self.enemy_speed)  # Crea una nueva instancia de Enemi (enemigo).
+        self.enemy_index += 1  # Incrementa el índice de enemigos.
+        enemy.rect.x = random.randint(0, SCREEN_WIDTH - enemy.rect.width)  # Posiciona el enemigo en una coordenada X aleatoria.
+        enemy.rect.y = -enemy.rect.height  # Posiciona el enemigo fuera de la pantalla en la coordenada Y.
+        self.enemies.append(enemy)  # Agrega el nuevo enemigo a la lista de enemigos del juego.
 
 
     # este metodo "dibuja o renderiza o refresca mis cambios en la pantalla del juego"
@@ -102,10 +115,14 @@ class Game:
         for enemy in self.enemies:
             enemy.draw(self.screen)
         
-        for bullet in self.player_bullets:
+        for bullet in self.player.get_bullets():
             bullet.draw(self.screen)
         pygame.display.update()
-        pygame.display.flip()
+
+
+    # Mostrar pantalla de "Game Over" si el jugador se queda sin vidas
+        if self.player.lives <= 0:
+            self.game_over_screen()
 
     def draw_background(self):
         # le indicamos a pygame que transforme el objeto BG (que es una imagen en memoria, no es un archivo)
@@ -127,3 +144,41 @@ class Game:
         # No hay una velocidad de juego como tal, el "game_speed" simplemente me indica
         # cuanto me voy a mover (cuantos pixeles hacia arriba o abajo) cen el eje Y
         self.y_pos_bg += self.game_speed
+
+    def game_over_screen(self):
+        self.screen.fill((0, 0, 0))  # Rellenar la pantalla con color negro
+        font = pygame.font.Font(None, 36)
+        text = font.render("Game Over", True, (255, 0, 0))
+        text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+        self.screen.blit(text, text_rect)
+
+        font = pygame.font.Font(None, 24)
+        player_name_text = font.render(f"Player Name: {self.player.name}", True, (255, 255, 255))
+        destroyed_enemies_text = font.render(f"Enemies Destroyed: {self.player.count}", True, (255, 255, 255))
+
+        name_text_rect = player_name_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 40))
+        destroyed_enemies_rect = destroyed_enemies_text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 80))
+
+        self.screen.blit(player_name_text, name_text_rect)
+        self.screen.blit(destroyed_enemies_text, destroyed_enemies_rect)
+
+        pygame.display.flip()
+
+        # Esperar hasta que el usuario presione cualquier botón
+        self.wait_for_restart()
+
+    def wait_for_restart(self):
+        # Método para esperar la entrada del jugador para reiniciar después de Game Over.
+        waiting_for_restart = True
+        while waiting_for_restart:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN or event.type == pygame.QUIT:
+                    waiting_for_restart = False
+                    self.reset()  # Reiniciar el juego completo
+    def reset(self):
+        # Reiniciar los valores del juego.
+        self.player.reset()
+        self.enemies.clear()
+        self.player_bullets.empty()
+        self.enemy_index = 1
+        self.game_over = False
