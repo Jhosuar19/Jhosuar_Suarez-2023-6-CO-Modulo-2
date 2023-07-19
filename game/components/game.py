@@ -68,26 +68,13 @@ class Game:
             player_bullets = self.player.get_bullets()
 
     # Verificar colisiones entre la nave y los enemigos
-            for enemy in self.enemies:
-                if self.player.rect.colliderect(enemy.rect):
-                    self.player.lose_life()  # Restar una vida al jugador
-                    self.enemies.remove(enemy)  # Eliminar el enemigo que colisionó con la nave
-
-                    if self.player.lives <= 0:
-                        self.game_over_screen()  # Mostrar pantalla de "Game Over" si el jugador se queda sin vidas
-                        self.game_over = True  # Finalizar el juego
+            self.check_enemy_collisions()
 
     # Actualizar cada bala del jugador en la lista de balas del jugador.
             for bullet in player_bullets:
                 bullet.update()
-
         # Verificar colisiones entre las balas del jugador y los enemigos.
-                for enemy in self.enemies:
-                    if bullet.rect.colliderect(enemy.rect):
-                        bullets_to_remove.append(bullet)  # Agregar la bala a la lista de balas a eliminar.
-                        self.enemies.remove(enemy)  # Eliminar el enemigo que colisionó con la bala del jugador.
-                        self.player.increase_count()  # Incrementar el contador de enemigos eliminados por el jugador.
-
+                self.check_bullet_to_enemy_check_collisions(bullet, bullets_to_remove)
     # Eliminar las balas que colisionaron con enemigos.
             for bullet in bullets_to_remove:
                 player_bullets.remove(bullet)
@@ -175,6 +162,7 @@ class Game:
                 if event.type == pygame.KEYDOWN or event.type == pygame.QUIT:
                     waiting_for_restart = False
                     self.reset()  # Reiniciar el juego completo
+                    
     def reset(self):
         # Reiniciar los valores del juego.
         self.player.reset()
@@ -182,3 +170,20 @@ class Game:
         self.player_bullets.empty()
         self.enemy_index = 1
         self.game_over = False
+
+    def check_enemy_collisions(self):
+        for enemy in self.enemies:
+            if self.player.rect.colliderect(enemy.rect):
+                self.player.lose_life()  # Restar una vida al jugador
+                self.enemies.remove(enemy)  # Eliminar el enemigo que colisionó con la nave
+
+                if self.player.lives <= 0:
+                    self.game_over_screen()  # Mostrar pantalla de "Game Over" si el jugador se queda sin vidas
+                    self.game_over = True  # Finalizar el juego
+    
+    def check_bullet_to_enemy_check_collisions(self, bullet, bullets_to_remove):
+        for enemy in self.enemies:
+            if bullet.rect.colliderect(enemy.rect):
+                bullets_to_remove.append(bullet)  # Agregar la bala a la lista de balas a eliminar.
+                self.enemies.remove(enemy)  # Eliminar el enemigo que colisionó con la bala del jugador.
+                self.player.increase_count()  # Incrementar el contador de enemigos eliminados por el jugador.
